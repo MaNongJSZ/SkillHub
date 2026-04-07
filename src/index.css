@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #f9fafb;
+  --bg-secondary: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+}
+
+.dark {
+  --bg-primary: #030712;
+  --bg-secondary: #111827;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Markdown 内容 */
+.prose {
+  color: #374151;
+  line-height: 1.75;
+}
+
+.dark .prose {
+  color: #d1d5db;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose pre,
+.prose blockquote,
+.prose table,
+.prose hr {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: #111827;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3 {
+  color: #f3f4f6;
+}
+
+.prose h1 { font-size: 1.5rem; }
+.prose h2 { font-size: 1.25rem; }
+.prose h3 { font-size: 1.1rem; }
+
+.prose strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.dark .prose strong {
+  color: #f9fafb;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose code {
+  background: #e5e7eb;
+  color: #111827;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+.dark .prose code {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+.prose pre {
+  background: #f3f4f6;
+  color: #111827;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid #d1d5db;
+}
+
+.dark .prose pre {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #1f2937;
+}
+
+.prose pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+.prose a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.prose a:hover {
+  color: #1d4ed8;
+}
+
+.dark .prose a {
+  color: #60a5fa;
+}
+
+.dark .prose a:hover {
+  color: #93bbfd;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin: 0.25em 0;
+}
+
+.prose blockquote {
+  border-left: 3px solid #9ca3af;
+  padding-left: 1em;
+  color: #6b7280;
+}
+
+.dark .prose blockquote {
+  border-left-color: #374151;
+  color: #9ca3af;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid #d1d5db;
+}
+
+.dark .prose hr {
+  border-top-color: #1f2937;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.dark .prose th,
+.dark .prose td {
+  border-color: #1f2937;
+}
+
+.prose th {
+  background: #f9fafb;
+  color: #111827;
+  font-weight: 600;
+}
+
+.dark .prose th {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+/* 全局选中色 */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* 禁用默认的 focus ring，使用自定义样式 */
+:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
