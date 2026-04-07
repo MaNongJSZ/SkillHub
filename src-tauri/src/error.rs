@@ -40,6 +40,18 @@ pub enum SkillHubError {
 
     #[error("IO 错误: {0}")]
     IoError(String),
+
+    #[error("网络请求失败: {0}")]
+    NetworkError(String),
+
+    #[error("在线搜索失败: {0}")]
+    OnlineSearchFailed(String),
+
+    #[error("Git clone 失败: {0}")]
+    GitCloneFailed(String),
+
+    #[error("Skill 已存在: {0}")]
+    SkillAlreadyExists(String),
 }
 
 impl From<std::io::Error> for SkillHubError {
@@ -51,6 +63,12 @@ impl From<std::io::Error> for SkillHubError {
 impl From<serde_json::Error> for SkillHubError {
     fn from(e: serde_json::Error) -> Self {
         SkillHubError::SerdeJson(e.to_string())
+    }
+}
+
+impl From<reqwest::Error> for SkillHubError {
+    fn from(e: reqwest::Error) -> Self {
+        SkillHubError::NetworkError(e.to_string())
     }
 }
 

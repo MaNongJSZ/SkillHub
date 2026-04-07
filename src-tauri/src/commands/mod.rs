@@ -1,6 +1,7 @@
 pub mod agent_cmd;
 pub mod config_cmd;
 pub mod link_cmd;
+pub mod online_cmd;
 pub mod search_cmd;
 pub mod skill_cmd;
 

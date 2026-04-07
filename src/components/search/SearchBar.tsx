@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useAppStore } from "../../stores/useAppStore";
 
 export default function SearchBar() {
-  const { searchQuery, search } = useAppStore();
+  const { searchQuery, search, searchMode, setSearchMode, searchOnline } = useAppStore();
   const [input, setInput] = useState(searchQuery);
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -13,7 +13,11 @@ export default function SearchBar() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void search(input);
+    if (searchMode === 'online') {
+      void searchOnline(input);
+    } else {
+      void search(input);
+    }
   };
 
   const handleClear = () => {
@@ -39,7 +43,7 @@ export default function SearchBar() {
           onChange={(event) => setInput(event.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="搜索 Skills..."
+          placeholder={searchMode === 'online' ? "搜索在线 Skills..." : "搜索本地 Skills..."}
           className="w-full bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/80 focus:outline-none"
         />
         {input && (
@@ -53,6 +57,30 @@ export default function SearchBar() {
             </svg>
           </button>
         )}
+        <div className="flex shrink-0 rounded-md border border-[color:var(--text-secondary)]/30 p-0.5">
+          <button
+            type="button"
+            onClick={() => setSearchMode('local')}
+            className={`rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
+              searchMode === 'local'
+                ? 'bg-blue-600/20 text-blue-400'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            本地
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchMode('online')}
+            className={`rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
+              searchMode === 'online'
+                ? 'bg-blue-600/20 text-blue-400'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            在线
+          </button>
+        </div>
       </div>
     </form>
   );

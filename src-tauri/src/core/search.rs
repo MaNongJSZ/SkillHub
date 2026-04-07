@@ -221,6 +221,8 @@ mod tests {
             agentskills_api_key: None,
             external_editor: None,
             auto_detect_agents: true,
+            github_token: None,
+            cache_ttl_minutes: 60,
         };
 
         let manager = SearchManager::new(&config);

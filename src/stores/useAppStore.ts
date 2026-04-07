@@ -2,15 +2,19 @@ import { create } from 'zustand'
 import type {
   Agent,
   AppConfig,
+  RemoteSkill,
+  RemoteSkillDetail,
   SearchResult,
   Skill,
   SkillDetail,
   SkillLink,
+  SkillSourceType,
 } from '../types'
 import {
   useAgents,
   useConfig,
   useLinks,
+  useOnline,
   useSearch,
   useSkills,
 } from '../hooks/useInvoke'
@@ -25,6 +29,12 @@ interface AppState {
   agents: Agent[]
   agentLinks: Map<string, SkillLink[]>
   config: AppConfig | null
+
+  // 在线搜索状态
+  searchMode: 'local' | 'online'
+  onlineSearchResults: RemoteSkill[]
+  onlineSearchLoading: boolean
+  remoteSkillDetail: RemoteSkillDetail | null
 
   view: 'list' | 'detail' | 'search' | 'settings' | 'agents' | 'dashboard'
   sidebarOpen: boolean
@@ -41,6 +51,11 @@ interface AppState {
   search: (query: string) => Promise<void>
   installFromPath: (path: string) => Promise<void>
   uninstallSkill: (name: string) => Promise<void>
+  setSearchMode: (mode: 'local' | 'online') => void
+  searchOnline: (query: string) => Promise<void>
+  getRemoteDetail: (source: SkillSourceType, id: string) => Promise<void>
+  installFromOnline: (source: SkillSourceType, id: string, url: string) => Promise<void>
+  installFromGit: (url: string) => Promise<void>
   setView: (view: AppState['view']) => void
   setSidebarOpen: (open: boolean) => void
   setInstallDialogOpen: (open: boolean) => void
@@ -56,6 +71,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   agents: [],
   agentLinks: new Map(),
   config: null,
+  searchMode: 'local',
+  onlineSearchResults: [],
+  onlineSearchLoading: false,
+  remoteSkillDetail: null,
   view: 'dashboard',
   sidebarOpen: true,
   installDialogOpen: false,
@@ -234,6 +253,90 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().loadSkills()
     } catch (error) {
       console.error('Failed to uninstall skill:', error)
+      throw error
+    }
+  },
+
+  setSearchMode: (mode: 'local' | 'online') => {
+    set({ searchMode: mode })
+  },
+
+  searchOnline: async (query: string) => {
+    const { searchOnline: search } = useOnline()
+
+    set({ searchQuery: query })
+
+    if (!query.trim()) {
+      set({ onlineSearchResults: [], view: 'list' })
+      return
+    }
+
+    set({ onlineSearchLoading: true })
+
+    try {
+      const results = await search(query)
+      set({ onlineSearchResults: results, onlineSearchLoading: false, view: 'search' })
+    } catch (error) {
+      console.error('Online search failed:', error)
+      set({ onlineSearchLoading: false })
+    }
+  },
+
+  getRemoteDetail: async (source: SkillSourceType, id: string) => {
+    const { getRemoteSkillDetail } = useOnline()
+
+    try {
+      const detail = await getRemoteSkillDetail(source, id)
+      set({ remoteSkillDetail: detail, view: 'search' })
+    } catch (error) {
+      console.error('Failed to get remote skill detail:', error)
+    }
+  },
+
+  installFromOnline: async (source: SkillSourceType, id: string, url: string) => {
+    const { installFromOnline: install } = useOnline()
+
+    try {
+      const result = await install(source, id, url, false)
+
+      if ('already_exists' in result) {
+        const overwrite = window.confirm('该 Skill 已存在，是否覆盖？')
+        if (overwrite) {
+          await install(source, id, url, true)
+        } else {
+          return
+        }
+      } else if ('failed' in result) {
+        throw new Error(result.failed.reason)
+      }
+
+      await get().loadSkills()
+    } catch (error) {
+      console.error('Failed to install from online:', error)
+      throw error
+    }
+  },
+
+  installFromGit: async (url: string) => {
+    const { installFromGit: install } = useOnline()
+
+    try {
+      const result = await install(url, false)
+
+      if ('already_exists' in result) {
+        const overwrite = window.confirm('该 Skill 已存在，是否覆盖？')
+        if (overwrite) {
+          await install(url, true)
+        } else {
+          return
+        }
+      } else if ('failed' in result) {
+        throw new Error(result.failed.reason)
+      }
+
+      await get().loadSkills()
+    } catch (error) {
+      console.error('Failed to install from git:', error)
       throw error
     }
   },

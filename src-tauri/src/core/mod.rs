@@ -1,6 +1,10 @@
 pub mod agent;
+pub mod cache;
 pub mod config;
+pub mod git_clone;
+pub mod github_source;
 pub mod installer;
 pub mod registry;
 pub mod search;
+pub mod source;
 pub mod symlink;

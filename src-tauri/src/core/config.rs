@@ -19,6 +19,18 @@ pub struct AppConfig {
 
     /// 启动时自动检测 agent
     pub auto_detect_agents: bool,
+
+    /// GitHub API Token（提升搜索频率限制）
+    #[serde(default)]
+    pub github_token: Option<String>,
+
+    /// 搜索缓存有效期（分钟）
+    #[serde(default = "default_cache_ttl")]
+    pub cache_ttl_minutes: u64,
+}
+
+fn default_cache_ttl() -> u64 {
+    60
 }
 
 impl Default for AppConfig {
@@ -32,6 +44,8 @@ impl Default for AppConfig {
             agentskills_api_key: None,
             external_editor: None,
             auto_detect_agents: true,
+            github_token: None,
+            cache_ttl_minutes: 60,
         }
     }
 }
@@ -164,6 +178,8 @@ mod tests {
             agentskills_api_key: None,
             external_editor: None,
             auto_detect_agents: true,
+            github_token: None,
+            cache_ttl_minutes: 60,
         };
 
         let migrated = migrate_registry_path_if_needed(&home, &mut config);

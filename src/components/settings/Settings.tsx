@@ -77,20 +77,25 @@ export default function Settings() {
       </section>
 
       <section className={cardClassName()}>
-        <h3 className="mb-3 text-lg font-semibold text-[var(--text-primary)]">API Keys</h3>
-        <label className="mb-1 block text-sm text-[var(--text-secondary)]">AgentSkills.io API Key</label>
-        <input
-          type="password"
-          value={localConfig.agentskills_api_key ?? ""}
-          onChange={(event) =>
-            setLocalConfig({
-              ...localConfig,
-              agentskills_api_key: event.target.value || null,
-            })
-          }
-          placeholder="可选"
-          className="w-full rounded-lg border border-[color:var(--text-secondary)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]"
-        />
+        <h3 className="mb-3 text-lg font-semibold text-[var(--text-primary)]">在线搜索</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-sm text-[var(--text-secondary)]">GitHub Token</label>
+            <input
+              type="password"
+              value={localConfig.github_token ?? ""}
+              onChange={(event) =>
+                setLocalConfig({
+                  ...localConfig,
+                  github_token: event.target.value || null,
+                })
+              }
+              placeholder="可选，提升 GitHub 搜索频率限制"
+              className="w-full rounded-lg border border-[color:var(--text-secondary)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]"
+            />
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">无 Token 时 GitHub API 限制 10 次/分钟，有 Token 提升至 5000 次/小时</p>
+          </div>
+        </div>
       </section>
 
       <section className={cardClassName()}>
@@ -136,20 +141,45 @@ export default function Settings() {
 
       <section className={cardClassName()}>
         <h3 className="mb-3 text-lg font-semibold text-[var(--text-primary)]">高级</h3>
-        <label className="flex cursor-pointer items-center gap-2 text-[var(--text-primary)]">
-          <input
-            type="checkbox"
-            checked={localConfig.auto_detect_agents}
-            onChange={(event) =>
-              setLocalConfig({
-                ...localConfig,
-                auto_detect_agents: event.target.checked,
-              })
-            }
-            className="h-4 w-4"
-          />
-          <span>启动时自动检测 Agents</span>
-        </label>
+        <div className="space-y-3">
+          <label className="flex cursor-pointer items-center gap-2 text-[var(--text-primary)]">
+            <input
+              type="checkbox"
+              checked={localConfig.auto_detect_agents}
+              onChange={(event) =>
+                setLocalConfig({
+                  ...localConfig,
+                  auto_detect_agents: event.target.checked,
+                })
+              }
+              className="h-4 w-4"
+            />
+            <span>启动时自动检测 Agents</span>
+          </label>
+          <div>
+            <label className="mb-1 block text-sm text-[var(--text-secondary)]">
+              搜索缓存有效期: {localConfig.cache_ttl_minutes} 分钟
+            </label>
+            <input
+              type="range"
+              min={10}
+              max={240}
+              step={10}
+              value={localConfig.cache_ttl_minutes}
+              onChange={(event) =>
+                setLocalConfig({
+                  ...localConfig,
+                  cache_ttl_minutes: Number(event.target.value),
+                })
+              }
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-[var(--text-secondary)]">
+              <span>10 分钟</span>
+              <span>240 分钟</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <div className="flex gap-3">

@@ -57,13 +57,13 @@ export default function AgentPanel() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20">
-            <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Agent 管理</h2>
-            <p className="text-xs text-gray-500">{agents.length} 个 Agent</p>
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">Agent 管理</h2>
+            <p className="text-xs text-[var(--text-secondary)]">{agents.length} 个 Agent</p>
           </div>
         </div>
 
@@ -71,7 +71,7 @@ export default function AgentPanel() {
           onClick={() => setShowAddForm((prev) => !prev)}
           className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             showAddForm
-              ? "bg-gray-700 text-gray-300"
+              ? "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
               : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
         >
@@ -84,11 +84,11 @@ export default function AgentPanel() {
 
       {/* 添加表单 */}
       {showAddForm && (
-        <div className="mb-6 rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-          <h3 className="mb-4 text-sm font-semibold text-gray-300">添加自定义 Agent</h3>
+        <div className="mb-6 rounded-xl border border-[color:var(--text-secondary)]/20 bg-[var(--bg-secondary)]/70 p-5">
+          <h3 className="mb-4 text-sm font-semibold text-[var(--text-primary)]">添加自定义 Agent</h3>
           <div className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs text-gray-500">ID</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">ID</label>
               <input
                 type="text"
                 placeholder="例如: my-agent"
@@ -96,11 +96,11 @@ export default function AgentPanel() {
                 onChange={(event) =>
                   setNewAgent((prev) => ({ ...prev, id: event.target.value }))
                 }
-                className="w-full rounded-lg border border-gray-700/50 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none"
+                className="w-full rounded-lg border border-[color:var(--text-secondary)]/20 bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-blue-500/50 focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-gray-500">显示名称</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">显示名称</label>
               <input
                 type="text"
                 placeholder="例如: My Agent"
@@ -108,11 +108,11 @@ export default function AgentPanel() {
                 onChange={(event) =>
                   setNewAgent((prev) => ({ ...prev, name: event.target.value }))
                 }
-                className="w-full rounded-lg border border-gray-700/50 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none"
+                className="w-full rounded-lg border border-[color:var(--text-secondary)]/20 bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-blue-500/50 focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-gray-500">Skills 路径</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Skills 路径</label>
               <input
                 type="text"
                 placeholder="例如: ~/.my-agent/skills"
@@ -120,7 +120,7 @@ export default function AgentPanel() {
                 onChange={(event) =>
                   setNewAgent((prev) => ({ ...prev, skills_path: event.target.value }))
                 }
-                className="w-full rounded-lg border border-gray-700/50 bg-gray-800/50 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-blue-500/50 focus:outline-none"
+                className="w-full rounded-lg border border-[color:var(--text-secondary)]/20 bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-blue-500/50 focus:outline-none"
               />
             </div>
             <button
@@ -140,34 +140,34 @@ export default function AgentPanel() {
         {agents.map((agent) => (
           <div
             key={agent.id}
-            className="group flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/30 p-4 transition-colors hover:border-gray-700"
+            className="group flex items-center gap-4 rounded-xl border border-[color:var(--text-secondary)]/20 bg-[var(--bg-secondary)]/50 p-4 transition-colors hover:border-[color:var(--text-secondary)]/40"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-800">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-primary)]">
+              <svg className="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-gray-200">{agent.name}</div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="text-sm font-medium text-[var(--text-primary)]">{agent.name}</div>
+              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                 <span>{agent.id}</span>
-                <span className="text-gray-700">|</span>
+                <span className="text-[color:var(--text-secondary)]/40">|</span>
                 <span className={`rounded px-1.5 py-0.5 text-[10px] ${
                   agent.detected
-                    ? "bg-blue-500/10 text-blue-400"
-                    : "bg-gray-800 text-gray-400"
+                    ? "bg-blue-500/10 text-blue-500"
+                    : "bg-[var(--bg-primary)] text-[var(--text-secondary)]"
                 }`}>
                   {agent.detected ? "自动检测" : "自定义"}
                 </span>
               </div>
-              <div className="truncate text-xs text-gray-600 mt-0.5">{agent.skills_path}</div>
+              <div className="truncate text-xs text-[var(--text-secondary)]/60 mt-0.5">{agent.skills_path}</div>
             </div>
             {!agent.detected && (
               <button
                 onClick={() => {
                   void handleRemove(agent.id);
                 }}
-                className="shrink-0 rounded-lg px-3 py-1.5 text-xs text-red-400 opacity-0 transition-opacity hover:bg-red-500/10 group-hover:opacity-100"
+                className="shrink-0 rounded-lg px-3 py-1.5 text-xs text-red-500 opacity-0 transition-opacity hover:bg-red-500/10 group-hover:opacity-100"
               >
                 移除
               </button>
@@ -177,7 +177,7 @@ export default function AgentPanel() {
       </div>
 
       {agents.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-gray-600">
+        <div className="flex flex-col items-center justify-center py-16 text-[var(--text-secondary)]/60">
           <svg className="mb-3 h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>

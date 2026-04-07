@@ -8,6 +8,7 @@ mod error;
 use commands::agent_cmd::*;
 use commands::config_cmd::*;
 use commands::link_cmd::*;
+use commands::online_cmd::*;
 use commands::search_cmd::*;
 use commands::skill_cmd::*;
 use std::sync::Mutex;
@@ -44,6 +45,11 @@ fn main() {
             // Search commands
             search_local,
             search_content,
+            // Online commands
+            search_online,
+            get_remote_skill_detail,
+            install_from_online,
+            install_from_git,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,11 +2,15 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   Agent,
   AppConfig,
+  InstallResult,
+  RemoteSkill,
+  RemoteSkillDetail,
   SearchResult,
   Skill,
   SkillDetail,
   SkillFilter,
   SkillLink,
+  SkillSourceType,
 } from "../types";
 
 export const useConfig = () => ({
@@ -45,4 +49,14 @@ export const useSearch = () => ({
   searchLocal: (query: string) => invoke<SearchResult[]>("search_local", { query }),
   searchContent: (query: string) =>
     invoke<SearchResult[]>("search_content", { query }),
+});
+
+export const useOnline = () => ({
+  searchOnline: (query: string) => invoke<RemoteSkill[]>("search_online", { query }),
+  getRemoteSkillDetail: (source: SkillSourceType, id: string) =>
+    invoke<RemoteSkillDetail>("get_remote_skill_detail", { source, id }),
+  installFromOnline: (source: SkillSourceType, id: string, url: string, overwrite: boolean) =>
+    invoke<InstallResult>("install_from_online", { source, id, url, overwrite }),
+  installFromGit: (url: string, overwrite: boolean) =>
+    invoke<InstallResult>("install_from_git", { url, overwrite }),
 });
