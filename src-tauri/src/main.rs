@@ -41,6 +41,7 @@ fn main() {
             enable_skill,
             disable_skill,
             batch_enable,
+            batch_disable,
             get_skill_links,
             // Search commands
             search_local,

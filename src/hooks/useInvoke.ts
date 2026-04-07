@@ -41,6 +41,8 @@ export const useLinks = () => ({
     invoke("disable_skill", { skillName, agentId }),
   batchEnable: (skillNames: string[], agentIds: string[]) =>
     invoke("batch_enable", { skillNames, agentIds }),
+  batchDisable: (skillNames: string[], agentIds: string[]) =>
+    invoke("batch_disable", { skillNames, agentIds }),
   getSkillLinks: (skillName: string) =>
     invoke<SkillLink[]>("get_skill_links", { skillName }),
 });

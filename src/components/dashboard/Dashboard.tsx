@@ -199,23 +199,27 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+      {/* 固定区域：统计卡片 */}
       <StatsCards
         totalSkills={skills.length}
         totalAgents={agents.length}
         enabledLinks={enabledLinks}
       />
-      <MatrixGrid
-        rows={rows}
-        agentIds={agentIds}
-        selectedSkills={selectedSkills}
-        selectedAgents={selectedAgents}
-        onToggleSkill={toggleSkillSelection}
-        onToggleAgent={toggleAgentSelection}
-        onToggleCell={handleToggleCell}
-        onBatchEnable={handleBatchEnable}
-        onBatchDisable={handleBatchDisable}
-      />
+      {/* 可滚动区域：矩阵表格 */}
+      <div className="min-h-0 flex-1">
+        <MatrixGrid
+          rows={rows}
+          agentIds={agentIds}
+          selectedSkills={selectedSkills}
+          selectedAgents={selectedAgents}
+          onToggleSkill={toggleSkillSelection}
+          onToggleAgent={toggleAgentSelection}
+          onToggleCell={handleToggleCell}
+          onBatchEnable={handleBatchEnable}
+          onBatchDisable={handleBatchDisable}
+        />
+      </div>
     </div>
   )
 }

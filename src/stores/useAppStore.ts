@@ -81,10 +81,21 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loadSkills: async () => {
     const { listSkills } = useSkills()
+    const { getSkillLinks } = useLinks()
 
     try {
       const skills = await listSkills()
-      set({ skills })
+      // 批量加载所有 skill 的链接状态，用于筛选
+      const entries = await Promise.all(
+        skills.map(async (skill) => {
+          const links = await getSkillLinks(skill.name)
+          return [skill.name, links] as const
+        })
+      )
+      set({
+        skills,
+        agentLinks: new Map(entries),
+      })
     } catch (error) {
       console.error('Failed to load skills:', error)
     }
@@ -122,12 +133,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         getSkillLinks(name),
       ])
 
-      set({
+      set((state) => ({
         selectedSkill: name,
         skillDetail: detail,
-        agentLinks: new Map([[name, links]]),
+        agentLinks: new Map(state.agentLinks).set(name, links),
         view: 'detail',
-      })
+      }))
     } catch (error) {
       console.error('Failed to load skill detail:', error)
     }
@@ -181,12 +192,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   batchDisableSkills: async (skillNames: string[], agentIds: string[]) => {
+    const { batchDisable } = useLinks()
     try {
-      for (const skillName of skillNames) {
-        for (const agentId of agentIds) {
-          await get().disableSkill(skillName, agentId)
-        }
-      }
+      await batchDisable(skillNames, agentIds)
     } catch (error) {
       console.error('Failed to batch disable skills:', error)
       throw error

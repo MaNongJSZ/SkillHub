@@ -18,32 +18,38 @@ pub struct SkillLink {
     pub is_managed_link: bool,
 }
 
-/// 启用 skill 到 agent
-#[tauri::command]
-pub async fn enable_skill(
-    state: State<'_, AppState>,
-    skill_name: String,
-    agent_id: String,
-) -> Result<()> {
-    let config_manager = state.config_manager.lock()
+/// 获取配置的辅助函数
+fn get_config_from_state(state: &State<'_, AppState>) -> Result<crate::core::config::AppConfig> {
+    let manager = state
+        .config_manager
+        .lock()
         .map_err(|e| crate::error::SkillHubError::IoError(e.to_string()))?;
+    Ok(manager.get_config().clone())
+}
 
-    let registry = RegistryManager::new(config_manager.get_config());
-    let skill = registry.get_skill_detail(&skill_name)?;
+/// 启用单个 skill 到 agent 的核心逻辑
+fn do_enable_skill(
+    config: &crate::core::config::AppConfig,
+    skill_name: &str,
+    agent_id: &str,
+) -> Result<()> {
+    let registry = RegistryManager::new(config);
+    let skill = registry.get_skill_detail(skill_name)?;
 
     let agent_manager = AgentManager::new();
     let agents = agent_manager.list_agents();
 
-    let agent = agents.iter()
+    let agent = agents
+        .iter()
         .find(|a| a.id == agent_id)
-        .ok_or_else(|| crate::error::SkillHubError::AgentNotFound(agent_id.clone()))?;
+        .ok_or_else(|| crate::error::SkillHubError::AgentNotFound(agent_id.to_string()))?;
 
     // 确保目录存在
     agent.ensure_skills_dir()?;
 
     // 创建 symlink
     let source = &skill.skill.path;
-    let target = &agent.skills_path.join(&skill_name);
+    let target = &agent.skills_path.join(skill_name);
 
     if target.exists() {
         return Ok(());
@@ -54,21 +60,17 @@ pub async fn enable_skill(
     Ok(())
 }
 
-/// 禁用 skill
-#[tauri::command]
-pub async fn disable_skill(
-    _state: State<'_, AppState>,
-    skill_name: String,
-    agent_id: String,
-) -> Result<()> {
+/// 禁用单个 skill 的核心逻辑
+fn do_disable_skill(skill_name: &str, agent_id: &str) -> Result<()> {
     let agent_manager = AgentManager::new();
     let agents = agent_manager.list_agents();
 
-    let agent = agents.iter()
+    let agent = agents
+        .iter()
         .find(|a| a.id == agent_id)
-        .ok_or_else(|| crate::error::SkillHubError::AgentNotFound(agent_id.clone()))?;
+        .ok_or_else(|| crate::error::SkillHubError::AgentNotFound(agent_id.to_string()))?;
 
-    let target = &agent.skills_path.join(&skill_name);
+    let target = &agent.skills_path.join(skill_name);
 
     if !target.exists() || !symlink::is_skill_link(target) {
         return Ok(());
@@ -79,6 +81,27 @@ pub async fn disable_skill(
     Ok(())
 }
 
+/// 启用 skill 到 agent
+#[tauri::command]
+pub async fn enable_skill(
+    state: State<'_, AppState>,
+    skill_name: String,
+    agent_id: String,
+) -> Result<()> {
+    let config = get_config_from_state(&state)?;
+    do_enable_skill(&config, &skill_name, &agent_id)
+}
+
+/// 禁用 skill
+#[tauri::command]
+pub async fn disable_skill(
+    _state: State<'_, AppState>,
+    skill_name: String,
+    agent_id: String,
+) -> Result<()> {
+    do_disable_skill(&skill_name, &agent_id)
+}
+
 /// 批量启用
 #[tauri::command]
 pub async fn batch_enable(
@@ -86,9 +109,26 @@ pub async fn batch_enable(
     skill_names: Vec<String>,
     agent_ids: Vec<String>,
 ) -> Result<()> {
+    let config = get_config_from_state(&state)?;
+
     for skill_name in &skill_names {
         for agent_id in &agent_ids {
-            enable_skill(state.clone(), skill_name.clone(), agent_id.clone()).await?;
+            do_enable_skill(&config, skill_name, agent_id)?;
+        }
+    }
+    Ok(())
+}
+
+/// 批量禁用
+#[tauri::command]
+pub async fn batch_disable(
+    _state: State<'_, AppState>,
+    skill_names: Vec<String>,
+    agent_ids: Vec<String>,
+) -> Result<()> {
+    for skill_name in &skill_names {
+        for agent_id in &agent_ids {
+            do_disable_skill(skill_name, agent_id)?;
         }
     }
     Ok(())
