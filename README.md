@@ -85,4 +85,4 @@ npm run test
 
 ## 许可证
 
-当前仓库尚未声明许可证。开源发布前建议补充 `LICENSE` 文件（如 MIT / Apache-2.0）。
+MIT License - see LICENSE file for details
