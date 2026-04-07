@@ -14,7 +14,6 @@ struct GhRepo {
     full_name: String,
     name: String,
     description: Option<String>,
-    html_url: String,
     clone_url: String,
     owner: Option<GhOwner>,
     topics: Option<Vec<String>>,

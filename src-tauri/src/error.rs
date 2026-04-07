@@ -51,6 +51,7 @@ pub enum SkillHubError {
     GitCloneFailed(String),
 
     #[error("Skill 已存在: {0}")]
+    #[allow(dead_code)]
     SkillAlreadyExists(String),
 }
 

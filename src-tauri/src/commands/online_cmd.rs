@@ -46,7 +46,7 @@ pub async fn search_online(
 #[tauri::command]
 pub async fn get_remote_skill_detail(
     state: State<'_, AppState>,
-    source: SkillSourceType,
+    _source: SkillSourceType,
     id: String,
 ) -> Result<RemoteSkillDetail> {
     let config = get_config(&state)?;
@@ -59,7 +59,7 @@ pub async fn get_remote_skill_detail(
 #[tauri::command]
 pub async fn install_from_online(
     state: State<'_, AppState>,
-    source: SkillSourceType,
+    _source: SkillSourceType,
     id: String,
     url: String,
     overwrite: bool,
