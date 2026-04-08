@@ -14,11 +14,11 @@ use commands::skill_cmd::*;
 use std::sync::Mutex;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::Manager;
+use tauri::{Manager, State};
 
 /// 检查 GitHub 最新 Release 版本
 #[tauri::command]
-async fn check_update() -> Result<Option<String>, String> {
+async fn check_update(state: State<'_, AppState>) -> Result<Option<String>, String> {
     use serde::Deserialize;
 
     #[derive(Deserialize)]
@@ -26,14 +26,28 @@ async fn check_update() -> Result<Option<String>, String> {
         tag_name: String,
     }
 
+    // 读取用户配置的 GitHub Token 以提升 API 限额
+    let token = state
+        .config_manager
+        .lock()
+        .map_err(|e| e.to_string())
+        .ok()
+        .and_then(|m| m.get_config().github_token.clone());
+
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let response = client
+    let mut request = client
         .get("https://api.github.com/repos/MaNongJSZ/SkillHub/releases/latest")
-        .header("User-Agent", "SkillHub")
+        .header("User-Agent", "SkillHub");
+
+    if let Some(ref t) = token {
+        request = request.header("Authorization", format!("Bearer {t}"));
+    }
+
+    let response = request
         .send()
         .await
         .map_err(|e| format!("网络请求失败: {e}"))?;
