@@ -212,8 +212,8 @@ export default function Settings() {
                   } else {
                     setUpdateStatus("当前已是最新版本");
                   }
-                } catch {
-                  setUpdateStatus("检查更新失败，请检查网络连接");
+                } catch (e) {
+                  setUpdateStatus(String(e).replace(/^Error:\s*/, "") || "检查更新失败");
                 } finally {
                   setUpdateChecking(false);
                 }

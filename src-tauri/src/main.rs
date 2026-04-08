@@ -27,16 +27,26 @@ async fn check_update() -> Result<Option<String>, String> {
     }
 
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let resp: GithubRelease = client
+    let response = client
         .get("https://api.github.com/repos/MaNongJSZ/SkillHub/releases/latest")
         .header("User-Agent", "SkillHub")
         .send()
         .await
-        .map_err(|e| format!("网络请求失败: {e}"))?
+        .map_err(|e| format!("网络请求失败: {e}"))?;
+
+    let status = response.status();
+    if status.as_u16() == 404 {
+        return Err("暂无已发布的版本".to_string());
+    }
+    if !status.is_success() {
+        return Err(format!("GitHub API 返回错误: {status}"));
+    }
+
+    let resp: GithubRelease = response
         .json()
         .await
         .map_err(|e| format!("解析响应失败: {e}"))?;
