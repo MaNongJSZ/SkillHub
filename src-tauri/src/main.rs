@@ -16,6 +16,41 @@ use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::Manager;
 
+/// 检查 GitHub 最新 Release 版本
+#[tauri::command]
+async fn check_update() -> Result<Option<String>, String> {
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    struct GithubRelease {
+        tag_name: String,
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp: GithubRelease = client
+        .get("https://api.github.com/repos/MaNongJSZ/SkillHub/releases/latest")
+        .header("User-Agent", "SkillHub")
+        .send()
+        .await
+        .map_err(|e| format!("网络请求失败: {e}"))?
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {e}"))?;
+
+    let latest = resp.tag_name.trim_start_matches('v');
+    let current = env!("CARGO_PKG_VERSION");
+
+    if latest != current {
+        Ok(Some(latest.to_string()))
+    } else {
+        Ok(None)
+    }
+}
+
 fn main() {
     let config_manager = core::config::ConfigManager::new()
         .expect("Failed to initialize config manager");
@@ -104,6 +139,8 @@ fn main() {
             get_remote_skill_detail,
             install_from_online,
             install_from_git,
+            // Update
+            check_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useConfig } from "../../hooks/useInvoke";
+import { useConfig, useUpdate } from "../../hooks/useInvoke";
 import { useAppStore } from "../../stores/useAppStore";
 import { useThemeStore, type ThemeMode } from "../../stores/useThemeStore";
 import type { AppConfig } from "../../types";
 
 const themeOptions: Array<{ key: ThemeMode; label: string; hint: string }> = [
-  { key: "light", label: "亮色", hint: "始终使用浅色主题" },
-  { key: "dark", label: "暗色", hint: "始终使用深色主题" },
+  { key: "light", label: "浅色", hint: "始终使用浅色主题" },
+  { key: "dark", label: "深色", hint: "始终使用深色主题" },
   { key: "system", label: "跟随系统", hint: "根据系统自动切换" },
 ];
 
@@ -17,8 +17,11 @@ function cardClassName() {
 export default function Settings() {
   const { config, loadConfig } = useAppStore();
   const { updateConfig } = useConfig();
+  const { checkUpdate } = useUpdate();
   const { theme, setTheme } = useThemeStore();
   const [localConfig, setLocalConfig] = useState<AppConfig | null>(config);
+  const [updateChecking, setUpdateChecking] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   useEffect(() => {
     void loadConfig();
@@ -179,6 +182,49 @@ export default function Settings() {
               <span>240 分钟</span>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className={cardClassName()}>
+        <h3 className="mb-3 text-lg font-semibold text-[var(--text-primary)]">关于与更新</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm text-[var(--text-primary)]">SkillHub</div>
+            <div className="text-xs text-[var(--text-secondary)]">当前版本 v{__APP_VERSION__}</div>
+            {updateStatus && (
+              <div className={`mt-1 text-xs ${updateStatus.includes("新版本") ? "text-emerald-500" : "text-[var(--text-secondary)]"}`}>
+                {updateStatus}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              const doCheck = async () => {
+                setUpdateChecking(true);
+                setUpdateStatus(null);
+                try {
+                  const latest = await checkUpdate();
+                  if (latest) {
+                    setUpdateStatus(`发现新版本 v${latest}`);
+                    if (window.confirm(`发现新版本 v${latest}，是否前往下载？`)) {
+                      window.open("https://github.com/MaNongJSZ/SkillHub/releases/latest", "_blank");
+                    }
+                  } else {
+                    setUpdateStatus("当前已是最新版本");
+                  }
+                } catch {
+                  setUpdateStatus("检查更新失败，请检查网络连接");
+                } finally {
+                  setUpdateChecking(false);
+                }
+              };
+              void doCheck();
+            }}
+            disabled={updateChecking}
+            className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            {updateChecking ? "检查中..." : "检查更新"}
+          </button>
         </div>
       </section>
 

@@ -62,3 +62,7 @@ export const useOnline = () => ({
   installFromGit: (url: string, overwrite: boolean) =>
     invoke<InstallResult>("install_from_git", { url, overwrite }),
 });
+
+export const useUpdate = () => ({
+  checkUpdate: () => invoke<string | null>("check_update"),
+});
