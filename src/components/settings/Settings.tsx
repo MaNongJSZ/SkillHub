@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useConfig, useUpdate } from "../../hooks/useInvoke";
 import { useAppStore } from "../../stores/useAppStore";
 import { useThemeStore, type ThemeMode } from "../../stores/useThemeStore";
@@ -206,8 +207,8 @@ export default function Settings() {
                   const latest = await checkUpdate();
                   if (latest) {
                     setUpdateStatus(`发现新版本 v${latest}`);
-                    if (window.confirm(`发现新版本 v${latest}，是否前往下载？`)) {
-                      window.open("https://github.com/MaNongJSZ/SkillHub/releases/latest", "_blank");
+                    if (window.confirm(`发现新版本 v${latest}，点击确认前往下载页面，下载安装后重新打开即可更新。`)) {
+                      await openUrl("https://github.com/MaNongJSZ/SkillHub/releases/latest");
                     }
                   } else {
                     setUpdateStatus("当前已是最新版本");
