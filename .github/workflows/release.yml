@@ -6,7 +6,24 @@ on:
       - 'v*'
 
 jobs:
-  release:
+  # 第一步：创建 Release（只跑一次）
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 'SkillHub ${{ github.ref_name }}'
+          body: 'See the assets to download this version and install.'
+          draft: false
+          prerelease: false
+
+  # 第二步：并行构建并上传
+  build:
+    needs: create-release
     permissions:
       contents: write
     strategy:
@@ -50,7 +67,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Build and release
+      - name: Build and upload
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
