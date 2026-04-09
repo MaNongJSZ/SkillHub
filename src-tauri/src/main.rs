@@ -81,6 +81,7 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(commands::config_cmd::AppState {
             config_manager: Mutex::new(config_manager),
         })
