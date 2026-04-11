@@ -91,6 +91,7 @@ export default function Dashboard() {
         return {
           skillName: skill.name,
           states,
+          group: skill.group,
         }
       }),
     [agentIds, linksMap, skills]
