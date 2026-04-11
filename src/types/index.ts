@@ -4,6 +4,7 @@ export interface Skill {
   tags: string[];
   path: string;
   installed_at: number;
+  group?: string;
 }
 
 export interface SkillDetail {

@@ -8,6 +8,7 @@ export default function SkillList() {
   const { skills, searchQuery, searchResults, agentLinks, loadSkills, view } =
     useAppStore();
   const [filter, setFilter] = useState<Filter>("all");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     void loadSkills();
@@ -16,7 +17,7 @@ export default function SkillList() {
   const displaySkills = useMemo(() => {
     if (searchQuery.trim()) {
       const merged = searchResults.reduce<
-        Array<{ name: string; description: string; tags: string[] }>
+        Array<{ name: string; description: string; tags: string[]; group?: string }>
       >((acc, result) => {
         const exists = acc.some((item) => item.name === result.skill_name);
         if (!exists) {
@@ -44,6 +45,37 @@ export default function SkillList() {
       return filter === "enabled" ? hasEnabled : !hasEnabled;
     });
   }, [agentLinks, filter, searchQuery, searchResults, skills]);
+
+  // 按分组拆分
+  const { flatSkills, groupedSkills } = useMemo(() => {
+    const flat: typeof displaySkills = [];
+    const grouped: Record<string, typeof displaySkills> = {};
+
+    for (const skill of displaySkills) {
+      if (skill.group) {
+        if (!grouped[skill.group]) {
+          grouped[skill.group] = [];
+        }
+        grouped[skill.group].push(skill);
+      } else {
+        flat.push(skill);
+      }
+    }
+
+    return { flatSkills: flat, groupedSkills: grouped };
+  }, [displaySkills]);
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) {
+        next.delete(group);
+      } else {
+        next.add(group);
+      }
+      return next;
+    });
+  };
 
   // 仅在 Skills 视图下显示列表
   if (
@@ -85,7 +117,8 @@ export default function SkillList() {
           </div>
         ) : (
           <div className="space-y-0.5">
-            {displaySkills.map((skill) => (
+            {/* 平铺 Skill */}
+            {flatSkills.map((skill) => (
               <SkillListItem
                 key={skill.name}
                 name={skill.name}
@@ -93,6 +126,48 @@ export default function SkillList() {
                 tags={skill.tags}
               />
             ))}
+
+            {/* 分组 Skill */}
+            {Object.entries(groupedSkills).map(([group, groupSkills]) => {
+              const expanded = expandedGroups.has(group);
+              return (
+                <div key={group}>
+                  {/* 分组标题 */}
+                  <button
+                    onClick={() => toggleGroup(group)}
+                    className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-black/10 hover:text-[var(--text-primary)]"
+                  >
+                    <svg
+                      className={`h-3 w-3 transition-transform ${expanded ? "rotate-90" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span>{group}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)]/60">
+                      ({groupSkills.length})
+                    </span>
+                  </button>
+
+                  {/* 展开的子 Skill */}
+                  {expanded && (
+                    <div className="ml-3 space-y-0.5 border-l border-[color:var(--text-secondary)]/20 pl-1">
+                      {groupSkills.map((skill) => (
+                        <SkillListItem
+                          key={skill.name}
+                          name={skill.name}
+                          description={skill.description}
+                          tags={skill.tags}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

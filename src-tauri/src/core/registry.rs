@@ -23,6 +23,9 @@ pub struct Skill {
     /// 安装时间
     #[serde(with = "serde_system_time")]
     pub installed_at: SystemTime,
+
+    /// 所属分组（嵌套目录的父目录名，如 "superpowers"）
+    pub group: Option<String>,
 }
 
 /// Skill 详情（包含完整内容）
@@ -75,7 +78,7 @@ impl RegistryManager {
         }
     }
 
-    /// 列出所有 skills
+    /// 列出所有 skills（支持嵌套目录分组）
     pub fn list_skills(&self) -> Result<Vec<Skill>> {
         let mut skills = Vec::new();
 
@@ -90,17 +93,25 @@ impl RegistryManager {
             let path = entry.path();
 
             // 只处理目录
-            if path.is_dir() {
-                if let Some(skill_name) = path.file_name().and_then(|n| n.to_str()) {
-                    // 跳过隐藏目录
-                    if skill_name.starts_with('.') {
-                        continue;
-                    }
+            if !path.is_dir() {
+                continue;
+            }
 
-                    // 尝试加载 skill 信息
-                    if let Ok(skill) = self.load_skill_info(skill_name) {
+            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
+                // 跳过隐藏目录
+                if dir_name.starts_with('.') {
+                    continue;
+                }
+
+                let skill_md = path.join("SKILL.md");
+                if skill_md.exists() {
+                    // 有 SKILL.md → 直接作为 flat skill 加载
+                    if let Ok(skill) = self.load_skill_info(dir_name) {
                         skills.push(skill);
                     }
+                } else {
+                    // 没有 SKILL.md → 扫描子目录作为分组 skill
+                    self.scan_sub_skills(dir_name, &mut skills);
                 }
             }
         }
@@ -109,6 +120,34 @@ impl RegistryManager {
         skills.sort_by(|a, b| a.name.cmp(&b.name));
 
         Ok(skills)
+    }
+
+    /// 扫描子目录中的 skill（分组支持）
+    fn scan_sub_skills(&self, group: &str, skills: &mut Vec<Skill>) {
+        let group_path = self.registry_path.join(group);
+
+        let Ok(entries) = fs::read_dir(&group_path) else {
+            return;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+
+            if let Some(sub_name) = path.file_name().and_then(|n| n.to_str()) {
+                if sub_name.starts_with('.') {
+                    continue;
+                }
+
+                let full_name = format!("{group}/{sub_name}");
+                if let Ok(mut skill) = self.load_skill_info(&full_name) {
+                    skill.group = Some(group.to_string());
+                    skills.push(skill);
+                }
+            }
+        }
     }
 
     /// 加载单个 skill 信息
@@ -141,6 +180,7 @@ impl RegistryManager {
             tags,
             path: skill_path,
             installed_at,
+            group: None,
         })
     }
 
@@ -291,6 +331,8 @@ mod tests {
             agentskills_api_key: None,
             external_editor: None,
             auto_detect_agents: true,
+            github_token: None,
+            cache_ttl_minutes: 60,
         };
 
         (temp_dir, config)
@@ -428,6 +470,7 @@ tags: test, example, demo
                 tags: vec!["test".to_string()],
                 path: PathBuf::from("/tmp/nested-test"),
                 installed_at: SystemTime::UNIX_EPOCH,
+                group: None,
             },
             content: "content".to_string(),
         };
