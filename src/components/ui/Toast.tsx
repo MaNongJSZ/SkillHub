@@ -15,7 +15,7 @@ export default function Toast() {
   }, [toasts, removeToast])
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-80 flex-col gap-2">
+    <div className="pointer-events-none fixed top-4 right-4 z-[60] flex w-80 flex-col gap-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}

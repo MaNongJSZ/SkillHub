@@ -161,3 +161,153 @@ pub async fn get_skill_links(
 
     Ok(links)
 }
+
+/// 未托管的 Skill 信息
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UnmanagedSkill {
+    pub name: String,
+    pub agent_id: String,
+    pub path: PathBuf,
+}
+
+/// 检测所有 agent 目录中未托管（非 symlink）的 skill
+#[tauri::command]
+pub async fn detect_unmanaged_skills(
+    _state: State<'_, AppState>,
+) -> Result<Vec<UnmanagedSkill>> {
+    let agent_manager = AgentManager::new();
+    let agents = agent_manager.list_agents();
+    let mut results = Vec::new();
+
+    for agent in &agents {
+        if !agent.skills_path.exists() {
+            continue;
+        }
+
+        for entry in std::fs::read_dir(&agent.skills_path)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if !path.is_dir() {
+                continue;
+            }
+
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                // 跳过隐藏目录
+                if name.starts_with('.') {
+                    continue;
+                }
+
+                // 已是 symlink/junction → 托管的，跳过
+                if symlink::is_skill_link(&path) {
+                    continue;
+                }
+
+                // 检查是否有 SKILL.md（独立 skill）
+                let skill_md = path.join("SKILL.md");
+                if skill_md.exists() {
+                    results.push(UnmanagedSkill {
+                        name: name.to_string(),
+                        agent_id: agent.id.clone(),
+                        path: path.clone(),
+                    });
+                } else {
+                    // 无 SKILL.md → 可能是分组目录，扫描内部子 skill
+                    for sub_entry in std::fs::read_dir(&path)? {
+                        let sub_entry = sub_entry?;
+                        let sub_path = sub_entry.path();
+
+                        if !sub_path.is_dir() {
+                            continue;
+                        }
+
+                        if let Some(sub_name) = sub_path.file_name().and_then(|n| n.to_str()) {
+                            if sub_name.starts_with('.') {
+                                continue;
+                            }
+
+                            // 已是 symlink/junction → 跳过
+                            if symlink::is_skill_link(&sub_path) {
+                                continue;
+                            }
+
+                            let full_name = format!("{name}/{sub_name}");
+                            results.push(UnmanagedSkill {
+                                name: full_name,
+                                agent_id: agent.id.clone(),
+                                path: sub_path.clone(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(results)
+}
+
+/// 导入未托管的 skill（转为 symlink 管理）
+#[tauri::command]
+pub async fn import_unmanaged_skill(
+    state: State<'_, AppState>,
+    name: String,
+    agent_id: String,
+) -> Result<()> {
+    let config = get_config_from_state(&state)?;
+    let registry_path = &config.registry_path;
+    let registry_skill = registry_path.join(&name);
+
+    let agent_manager = AgentManager::new();
+    let agents = agent_manager.list_agents();
+    let agent = agents
+        .iter()
+        .find(|a| a.id == agent_id)
+        .ok_or_else(|| crate::error::SkillHubError::AgentNotFound(agent_id.clone()))?;
+
+    let agent_skill = agent.skills_path.join(&name);
+
+    if !agent_skill.exists() {
+        return Err(crate::error::SkillHubError::SkillNotFound(format!(
+            "Skill '{name}' not found in agent '{agent_id}'"
+        )));
+    }
+
+    // 如果已是 symlink，无需处理
+    if symlink::is_skill_link(&agent_skill) {
+        return Ok(());
+    }
+
+    // 如果中央仓库没有该 skill，先复制过去
+    if !registry_skill.exists() {
+        // 复制整个目录到中央仓库
+        copy_dir_recursive(&agent_skill, &registry_skill)?;
+    }
+
+    // 删除 agent 目录中的副本
+    std::fs::remove_dir_all(&agent_skill)?;
+
+    // 创建 symlink
+    symlink::create_skill_link(&registry_skill, &agent_skill)?;
+
+    Ok(())
+}
+
+/// 递归复制目录
+fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> Result<()> {
+    std::fs::create_dir_all(dst)?;
+
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else {
+            std::fs::copy(&src_path, &dst_path)?;
+        }
+    }
+
+    Ok(())
+}

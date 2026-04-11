@@ -82,6 +82,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(commands::config_cmd::AppState {
             config_manager: Mutex::new(config_manager),
         })
@@ -156,6 +157,8 @@ fn main() {
             batch_enable,
             batch_disable,
             get_skill_links,
+            detect_unmanaged_skills,
+            import_unmanaged_skill,
             // Search commands
             search_local,
             search_content,

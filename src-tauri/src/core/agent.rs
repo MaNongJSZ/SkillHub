@@ -103,7 +103,8 @@ impl AgentManager {
         let custom_agents: Vec<Agent> = serde_json::from_str(&content)?;
 
         for agent in custom_agents {
-            self.agents.insert(agent.id.clone(), agent);
+            // 不覆盖自动检测到的 agent，避免 detected 标志被自定义版本覆盖
+            self.agents.entry(agent.id.clone()).or_insert(agent);
         }
 
         Ok(())
@@ -183,7 +184,7 @@ impl AgentManager {
             (
                 "openclaw",
                 "OpenClaw",
-                home.join("clawd").join("skills"),
+                home.join(".openclaw").join("skills"),
                 None,
             ),
         ];

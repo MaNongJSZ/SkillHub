@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAgents } from "../../hooks/useInvoke";
 import { useAppStore } from "../../stores/useAppStore";
+import { useToastStore } from "../../stores/useToastStore";
 
 export default function AgentPanel() {
   const { agents, loadAgents } = useAppStore();
   const { addCustomAgent, removeAgent } = useAgents();
+  const { pushToast } = useToastStore();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAgent, setNewAgent] = useState({
     id: "",
@@ -46,6 +48,16 @@ export default function AgentPanel() {
     try {
       await removeAgent(id);
       await loadAgents();
+      // 检查是否因自动检测重新出现
+      const stillExists = agents.some((a) => a.id === id);
+      if (stillExists) {
+        pushToast({
+          type: "info",
+          message: `Agent "${id}" 已从自定义列表移除，但因 Skills 目录存在仍会被自动检测`,
+        });
+      } else {
+        pushToast({ type: "success", message: "Agent 已移除" });
+      }
     } catch (error) {
       window.alert(`移除失败: ${String(error)}`);
     }

@@ -11,6 +11,7 @@ import type {
   SkillFilter,
   SkillLink,
   SkillSourceType,
+  UnmanagedSkill,
 } from "../types";
 
 export const useConfig = () => ({
@@ -45,6 +46,10 @@ export const useLinks = () => ({
     invoke("batch_disable", { skillNames, agentIds }),
   getSkillLinks: (skillName: string) =>
     invoke<SkillLink[]>("get_skill_links", { skillName }),
+  detectUnmanagedSkills: () =>
+    invoke<UnmanagedSkill[]>("detect_unmanaged_skills"),
+  importUnmanagedSkill: (name: string, agentId: string) =>
+    invoke("import_unmanaged_skill", { name, agentId }),
 });
 
 export const useSearch = () => ({

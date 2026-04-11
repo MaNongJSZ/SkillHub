@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { open as openDialog } from '@tauri-apps/plugin-dialog'
 import { useAppStore } from '../../stores/useAppStore'
 import { useToastStore } from '../../stores/useToastStore'
 
@@ -21,6 +22,21 @@ export default function InstallDialog({
   const [submitting, setSubmitting] = useState(false)
   const { pushToast } = useToastStore()
   const { installFromGit } = useAppStore()
+
+  const handleBrowse = async () => {
+    try {
+      const selected = await openDialog({
+        directory: true,
+        multiple: false,
+        title: '选择 Skill 目录',
+      })
+      if (selected) {
+        setPath(selected)
+      }
+    } catch {
+      // 用户取消或环境不支持，忽略
+    }
+  }
 
   if (!open) return null
 
@@ -99,13 +115,21 @@ export default function InstallDialog({
 
         {tab === 'local' ? (
           <>
-            <input
-              className="w-full rounded-md border border-[color:var(--text-secondary)]/20 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-blue-500"
-              placeholder="输入本地路径"
-              value={path}
-              onChange={(event) => setPath(event.target.value)}
-            />
-            <p className="mt-2 text-xs text-[var(--text-secondary)]">支持拖拽文件到窗口快速安装</p>
+            <div className="flex gap-2">
+              <input
+                className="min-w-0 flex-1 rounded-md border border-[color:var(--text-secondary)]/20 bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-blue-500"
+                placeholder="输入本地路径"
+                value={path}
+                onChange={(event) => setPath(event.target.value)}
+              />
+              <button
+                onClick={() => void handleBrowse()}
+                className="shrink-0 rounded-md border border-[color:var(--text-secondary)]/20 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"
+              >
+                浏览
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-[var(--text-secondary)]">支持单个 Skill 文件夹、Skill 集合文件夹，或直接拖拽文件夹到窗口</p>
           </>
         ) : (
           <>

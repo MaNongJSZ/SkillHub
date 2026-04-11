@@ -52,6 +52,12 @@ export interface SkillFilter {
   agent_id?: string;
 }
 
+export interface UnmanagedSkill {
+  name: string
+  agent_id: string
+  path: string
+}
+
 // === 在线发现与安装类型 ===
 
 export type SkillSourceType = 'github'

@@ -20,9 +20,10 @@ impl Installer {
 
     /// 从本地路径安装 skill
     ///
-    /// 支持两种路径格式:
+    /// 支持三种路径格式:
     /// 1. 直接指向 SKILL.md 文件
     /// 2. 指向包含 SKILL.md 的目录
+    /// 3. 指向包含多个 skill 子目录的父目录（自动批量安装）
     pub fn install_from_path(&self, source_path: &Path) -> Result<Skill> {
         // 检查路径是否存在
         if !source_path.exists() {
@@ -32,22 +33,72 @@ impl Installer {
             )));
         }
 
-        // 查找 SKILL.md 文件
-        let skill_md_path = self.find_skill_md(source_path)?;
+        // 尝试直接安装（路径包含 SKILL.md）
+        let skill_md_path = self.find_skill_md(source_path);
+        if let Ok(md_path) = skill_md_path {
+            return self.install_single(&md_path);
+        }
 
+        // 路径下没有 SKILL.md，扫描子目录批量安装
+        if source_path.is_dir() {
+            let mut last_skill: Option<Skill> = None;
+            let mut installed_count = 0;
+
+            for entry in fs::read_dir(source_path).map_err(|e| {
+                SkillHubError::InvalidSkillPath(format!("读取目录失败: {}", e))
+            })? {
+                let entry = entry.map_err(|e| {
+                    SkillHubError::InvalidSkillPath(format!("读取目录项失败: {}", e))
+                })?;
+                let path = entry.path();
+
+                if !path.is_dir() {
+                    continue;
+                }
+
+                if let Ok(md_path) = self.find_skill_md(&path) {
+                    match self.install_single(&md_path) {
+                        Ok(skill) => {
+                            last_skill = Some(skill);
+                            installed_count += 1;
+                        }
+                        Err(e) => {
+                            log::warn!("跳过子目录 {}: {}", path.display(), e);
+                        }
+                    }
+                }
+            }
+
+            if installed_count > 0 {
+                log::info!("批量安装完成: {} 个 skill", installed_count);
+                // 返回最后一个安装的 skill 信息
+                return last_skill.ok_or_else(|| {
+                    SkillHubError::InvalidSkillPath("安装失败".to_string())
+                });
+            }
+        }
+
+        Err(SkillHubError::SkillMdNotFound(format!(
+            "目录中未找到 SKILL.md，且无子目录包含 SKILL.md: {}",
+            source_path.display()
+        )))
+    }
+
+    /// 安装单个 skill（从 SKILL.md 路径）
+    fn install_single(&self, skill_md_path: &Path) -> Result<Skill> {
         // 读取 SKILL.md 内容
-        let content = fs::read_to_string(&skill_md_path).map_err(|e| {
+        let content = fs::read_to_string(skill_md_path).map_err(|e| {
             SkillHubError::InvalidSkillPath(format!("读取 SKILL.md 失败: {}", e))
         })?;
 
         // 提取 skill 名称
-        let name = self.extract_name(&content, &skill_md_path)?;
+        let name = self.extract_name(&content, skill_md_path)?;
 
         // 创建 skill 目录
         let skill_path = self.registry.create_skill_dir(&name)?;
 
         // 复制文件到注册表
-        self.copy_skill_files(&skill_md_path, &skill_path)?;
+        self.copy_skill_files(skill_md_path, &skill_path)?;
 
         // 加载并返回 skill 信息
         self.registry.load_skill_info(&name)

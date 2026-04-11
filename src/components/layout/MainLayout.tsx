@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { listen } from '@tauri-apps/api/event'
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { useAppStore } from '../../stores/useAppStore'
 import { useThemeStore } from '../../stores/useThemeStore'
@@ -47,41 +48,32 @@ export default function MainLayout({ children, sidebar }: MainLayoutProps) {
     'ctrl+i': () => setInstallDialogOpen(true),
   })
 
+  // 拖拽安装：使用 Tauri 2 事件
   useEffect(() => {
-    const mainElement = mainRef.current
-    if (!mainElement) {
-      return
-    }
-
-    const onDrop = async (event: DragEvent) => {
-      event.preventDefault()
-      const file = event.dataTransfer?.files?.[0] as
-        | (File & { path?: string })
-        | undefined
-      const droppedPath = file?.path
-
-      if (!droppedPath) {
-        pushToast({ type: 'info', message: '未检测到可安装路径' })
+    const unlisten = listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
+      const paths = event.payload.paths
+      if (!paths?.length) {
+        pushToast({ type: 'info', message: '请拖拽包含 SKILL.md 的文件夹' })
         return
       }
 
       try {
-        await installFromPath(droppedPath)
+        await installFromPath(paths[0])
         pushToast({ type: 'success', message: '安装成功' })
       } catch {
         pushToast({ type: 'error', message: '安装失败，请检查路径后重试' })
       }
-    }
+    })
 
-    const onDragOver = (event: DragEvent) => {
-      event.preventDefault()
-    }
+    // 阻止浏览器默认的文件打开行为
+    const prevent = (e: DragEvent) => e.preventDefault()
+    document.addEventListener('dragover', prevent)
+    document.addEventListener('drop', prevent)
 
-    mainElement.addEventListener('drop', onDrop)
-    mainElement.addEventListener('dragover', onDragOver)
     return () => {
-      mainElement.removeEventListener('drop', onDrop)
-      mainElement.removeEventListener('dragover', onDragOver)
+      void unlisten.then((fn) => fn())
+      document.removeEventListener('dragover', prevent)
+      document.removeEventListener('drop', prevent)
     }
   }, [installFromPath, pushToast])
 
