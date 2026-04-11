@@ -11,6 +11,6 @@
     "shell:allow-open",
     "dialog:allow-open",
     "core:event:allow-listen",
-    "opener:allow-open-url"
+    "opener:default"
   ]
 }
