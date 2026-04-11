@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 export interface MatrixRow {
   skillName: string
@@ -208,7 +208,7 @@ export default function MatrixGrid({
               const allSelected = names.every((n) => selectedSkillSet.has(n))
 
               return (
-                <tbody key={group}>
+                <Fragment key={group}>
                   {/* 分组标题行 */}
                   <tr className="border-b border-[color:var(--text-secondary)]/25 bg-[var(--bg-secondary)]/60">
                     <td className="px-3 py-2 text-center">
@@ -272,7 +272,7 @@ export default function MatrixGrid({
                       {agentIds.map((agentId) => renderToggleCell(row.skillName, agentId, Boolean(row.states[agentId])))}
                     </tr>
                   ))}
-                </tbody>
+                </Fragment>
               )
             })}
           </tbody>
