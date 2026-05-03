@@ -4,7 +4,9 @@ use std::fs;
 use std::path::Path;
 
 /// manifest.json 中的单条 skill 记录
+/// 使用 camelCase 序列化以匹配 Claude Desktop 的格式（skillId, creatorType, updatedAt）
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ManifestSkill {
     pub skill_id: String,
     pub name: String,
@@ -19,6 +21,7 @@ pub struct ManifestSkill {
 
 /// Claude Desktop skills-plugin 的 manifest.json
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Manifest {
     pub last_updated: u64,
     pub skills: Vec<ManifestSkill>,
