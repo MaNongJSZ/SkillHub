@@ -31,6 +31,7 @@ export default function AgentPanel() {
         skills_path: newAgent.skills_path,
         workspace_path: null,
         detected: false,
+        kind: "Simple",
       });
       setNewAgent({ id: "", name: "", skills_path: "" });
       setShowAddForm(false);
