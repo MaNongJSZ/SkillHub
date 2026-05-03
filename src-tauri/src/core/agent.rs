@@ -8,6 +8,16 @@ use std::path::PathBuf;
 
 const CUSTOM_AGENTS_FILE: &str = "custom_agents.json";
 
+/// Agent 类型，区分不同 skill 管理方式
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub enum AgentKind {
+    /// 标准 agent，只需 symlink 即可
+    #[default]
+    Simple,
+    /// Claude Desktop，需额外同步 manifest.json
+    ClaudeDesktop,
+}
+
 /// Agent 配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Agent {
@@ -25,6 +35,10 @@ pub struct Agent {
 
     /// 是否自动检测到
     pub detected: bool,
+
+    /// Agent 类型
+    #[serde(default)]
+    pub kind: AgentKind,
 }
 
 impl Agent {
@@ -35,6 +49,7 @@ impl Agent {
         skills_path: PathBuf,
         workspace_path: Option<PathBuf>,
         detected: bool,
+        kind: AgentKind,
     ) -> Self {
         Self {
             id,
@@ -42,6 +57,7 @@ impl Agent {
             skills_path,
             workspace_path,
             detected,
+            kind,
         }
     }
 
@@ -199,10 +215,82 @@ impl AgentManager {
                 skills_path,
                 workspace_path,
                 detected,
+                AgentKind::Simple,
             );
 
             self.agents.insert(id.to_string(), agent);
         }
+
+        // 自动检测 Claude Desktop
+        if let Some(skills_path) = Self::detect_claude_desktop() {
+            self.agents.insert(
+                "claude-desktop".to_string(),
+                Agent::new(
+                    "claude-desktop".to_string(),
+                    "Claude Desktop".to_string(),
+                    skills_path,
+                    None,
+                    true,
+                    AgentKind::ClaudeDesktop,
+                ),
+            );
+        }
+    }
+
+    /// 自动检测 Claude Desktop 的 skills 路径
+    /// Windows: 扫描 %LOCALAPPDATA%/Packages/Claude_*/LocalCache/Roaming/Claude-3p/
+    ///   local-agent-mode-sessions/skills-plugin/{uuid1}/{uuid2}/skills/
+    /// 其他平台：暂不支持
+    fn detect_claude_desktop() -> Option<PathBuf> {
+        let local_app_data = std::env::var("LOCALAPPDATA").ok()?;
+        let packages = PathBuf::from(local_app_data).join("Packages");
+
+        for entry in std::fs::read_dir(&packages).ok()? {
+            let entry = entry.ok()?;
+            let name = entry.file_name();
+            let name_str = name.to_str()?;
+
+            if !name_str.starts_with("Claude_") {
+                continue;
+            }
+
+            let skills_plugin_base = entry
+                .path()
+                .join("LocalCache")
+                .join("Roaming")
+                .join("Claude-3p")
+                .join("local-agent-mode-sessions")
+                .join("skills-plugin");
+
+            if !skills_plugin_base.exists() {
+                continue;
+            }
+
+            // 两层 UUID 目录：user_uuid / session_uuid
+            for l1 in std::fs::read_dir(&skills_plugin_base).ok()? {
+                let l1 = l1.ok()?;
+                if !l1.path().is_dir() {
+                    continue;
+                }
+
+                for l2 in std::fs::read_dir(l1.path()).ok()? {
+                    let l2 = l2.ok()?;
+                    let session_path = l2.path();
+                    if !session_path.is_dir() {
+                        continue;
+                    }
+
+                    let manifest = session_path.join("manifest.json");
+                    let skills_dir = session_path.join("skills");
+
+                    if manifest.exists() && skills_dir.exists() {
+                        return Some(skills_dir);
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     /// 列出所有 agents
@@ -327,6 +415,7 @@ mod tests {
             PathBuf::from("/home/user/.claude/skills"),
             None,
             true,
+            AgentKind::Simple,
         );
 
         let link_path = agent.skill_link_path("test-skill");
@@ -341,6 +430,7 @@ mod tests {
             PathBuf::from("/home/user/.claude/skills"),
             None,
             true,
+            AgentKind::Simple,
         );
 
         let workspace = PathBuf::from("/home/user/projects/myproject");
@@ -357,6 +447,7 @@ mod tests {
             PathBuf::from("/home/user/.claude/skills"),
             Some(workspace_base),
             true,
+            AgentKind::Simple,
         );
 
         let project_name = PathBuf::from("myproject");
@@ -407,6 +498,7 @@ mod tests {
             PathBuf::from("/custom/path"),
             None,
             false,
+            AgentKind::Simple,
         );
 
         assert!(manager.add_agent(custom_agent).is_ok());
@@ -426,6 +518,7 @@ mod tests {
             PathBuf::from("/duplicate/path"),
             None,
             false,
+            AgentKind::Simple,
         );
 
         let result = manager.add_agent(custom_agent);
@@ -442,6 +535,7 @@ mod tests {
             PathBuf::from("/removable/path"),
             None,
             false,
+            AgentKind::Simple,
         );
 
         manager.add_agent(custom_agent).unwrap();
@@ -471,6 +565,7 @@ mod tests {
             PathBuf::from("/custom/path"),
             None,
             false,
+            AgentKind::Simple,
         );
         manager.add_agent(custom_agent).unwrap();
 
@@ -493,6 +588,7 @@ mod tests {
             PathBuf::from("/old/path"),
             None,
             false,
+            AgentKind::Simple,
         );
         manager.add_agent(custom_agent).unwrap();
 
@@ -503,6 +599,7 @@ mod tests {
             temp_dir.path().join("new").join("path"),
             None,
             false,
+            AgentKind::Simple,
         );
 
         assert!(manager.update_agent("updatable", updated_agent).is_ok());
@@ -521,6 +618,7 @@ mod tests {
             PathBuf::from("/original/path"),
             None,
             false,
+            AgentKind::Simple,
         );
         manager.add_agent(agent).unwrap();
 
@@ -531,6 +629,7 @@ mod tests {
             PathBuf::from("/wrong/path"),
             None,
             false,
+            AgentKind::Simple,
         );
 
         let result = manager.update_agent("original", wrong_agent);

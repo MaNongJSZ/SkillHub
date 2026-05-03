@@ -3741,7 +3741,7 @@ checksum = "b2aa850e253778c88a04c3d7323b043aeda9d3e30d5971937c1855769763678e"
 
 [[package]]
 name = "skillhub"
-version = "0.1.6"
+version = "0.1.8"
 dependencies = [
  "dirs 5.0.1",
  "log",

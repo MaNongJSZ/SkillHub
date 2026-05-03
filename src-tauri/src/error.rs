@@ -53,6 +53,9 @@ pub enum SkillHubError {
     #[error("Skill 已存在: {0}")]
     #[allow(dead_code)]
     SkillAlreadyExists(String),
+
+    #[error("Manifest 同步失败: {0}")]
+    ManifestError(String),
 }
 
 impl From<std::io::Error> for SkillHubError {

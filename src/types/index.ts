@@ -18,6 +18,7 @@ export interface Agent {
   skills_path: string;
   workspace_path: string | null;
   detected: boolean;
+  kind: "Simple" | "ClaudeDesktop";
 }
 
 export interface SkillLink {

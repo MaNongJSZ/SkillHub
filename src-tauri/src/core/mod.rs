@@ -1,5 +1,6 @@
 pub mod agent;
 pub mod cache;
+pub mod claude_desktop;
 pub mod config;
 pub mod git_clone;
 pub mod github_source;

@@ -1,4 +1,4 @@
-use crate::core::agent::AgentManager;
+use crate::core::agent::{AgentKind, AgentManager};
 use crate::core::registry::RegistryManager;
 use crate::core::symlink;
 use crate::error::Result;
@@ -57,6 +57,17 @@ fn do_enable_skill(
 
     symlink::create_skill_link(source, target)?;
 
+    // Claude Desktop 需要同步 manifest.json
+    if agent.kind == AgentKind::ClaudeDesktop {
+        if let Some(manifest_dir) = agent.skills_path.parent() {
+            crate::core::claude_desktop::Manifest::add_skill(
+                manifest_dir,
+                skill_name,
+                &skill.skill.description,
+            )?;
+        }
+    }
+
     Ok(())
 }
 
@@ -77,6 +88,13 @@ fn do_disable_skill(skill_name: &str, agent_id: &str) -> Result<()> {
     }
 
     symlink::remove_skill_link(target)?;
+
+    // Claude Desktop 需要同步 manifest.json
+    if agent.kind == AgentKind::ClaudeDesktop {
+        if let Some(manifest_dir) = agent.skills_path.parent() {
+            crate::core::claude_desktop::Manifest::remove_skill(manifest_dir, skill_name)?;
+        }
+    }
 
     Ok(())
 }
